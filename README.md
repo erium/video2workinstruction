@@ -1,2 +1,2 @@
-# video2workinstruciton
+# video2workinstruction
 Hosts artifacts of the video2workinstruction API
