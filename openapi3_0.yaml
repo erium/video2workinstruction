@@ -1,0 +1,443 @@
+openapi: 3.0.3
+info:
+  title: Video to Workinstructions API
+  description: API for converting videos to workinstructions
+  version: 1.0.0-RC1
+paths:
+  /v1/video/videoAnalysis:
+    post:
+      tags:
+        - videoAnalysis
+      summary: Start Video Analysis
+      description: >-
+        Starts the video to workinstruction conversion and returns an ID and a
+        Halerium Path URL at which the product definition can be found and
+        edited.
+      operationId: startVideoAnalysis
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_startVideoAnalysis'
+        required: true
+      responses:
+        '201':
+          description: >-
+            ID and Halerium Path URL at which the product definition can be
+            found and edited.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoAnalysisInformation'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/video/videoAnalysis/{id}:
+    get:
+      tags:
+        - videoAnalysis
+      summary: Get the current Video Analysis result.
+      description: Returns the current result of the video analysis with the given ID.
+      operationId: getVideoAnalysis
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Id
+      responses:
+        '200':
+          description: The product definition model of the video analysis.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoAnalysisResult'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/video/videoAnalysis/{id}/cancel:
+    post:
+      tags:
+        - videoAnalysis
+      summary: Cancel Video Analysis
+      description: Cancels the video analysis with the given ID.
+      operationId: cancelVideoAnalysis
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Id
+      responses:
+        '200':
+          description: Message indicating the run was cancelled.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoAnalysisCancelled'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/video/videoAnalysis/{id}/delete:
+    post:
+      tags:
+        - videoAnalysis
+      summary: Delete Video Analysis
+      description: >-
+        Deletes the video analysis run with the given ID. Also cancels the run
+        if it is still running.
+      operationId: deleteVideoAnalysis
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Id
+      responses:
+        '200':
+          description: Message indicating when the run was deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoAnalysisDeleted'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    Activity:
+      properties:
+        name:
+          type: string
+          title: Name
+        description:
+          type: string
+          title: Description
+        activityType:
+          type: string
+          enum:
+            - SETUP
+            - PRODUCTION
+            - TEAR DOWN
+            - REWORK
+            - QUALITY CHECK
+          title: Activitytype
+        steps:
+          items:
+            $ref: '#/components/schemas/Step'
+          type: array
+          title: Steps
+      type: object
+      required:
+        - name
+        - description
+        - activityType
+        - steps
+      title: Activity
+    Body_startVideoAnalysis:
+      properties:
+        video:
+          type: string
+          format: binary
+          title: Video
+          description: Video file to be analyzed
+        productDefinitionName:
+          type: string
+          title: Productdefinitionname
+          description: Name of the product definition
+        videoPath:
+          type: string
+          title: Videopath
+          description: Path to the video file on client's system
+      type: object
+      required:
+        - video
+        - productDefinitionName
+        - videoPath
+      title: Body_startVideoAnalysis
+    Equipment:
+      properties:
+        name:
+          type: string
+          title: Name
+        position:
+          type: integer
+          title: Position
+        inventoryNumber:
+          type: string
+          title: Inventorynumber
+        quantity:
+          $ref: '#/components/schemas/Quantity'
+      type: object
+      required:
+        - name
+        - position
+        - inventoryNumber
+        - quantity
+      title: Equipment
+    ErrorResponse:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: ''
+        code:
+          type: integer
+          title: Code
+          default: 0
+        message:
+          type: string
+          title: Message
+          default: ''
+      type: object
+      title: ErrorResponse
+      examples:
+        - code: 400
+          detail: An error occurred while processing the request
+          message: Detailed error message about the cause of the error.
+        - code: 404
+          detail: Not Found
+          message: The requested resource was not found.
+    ProductDefinition:
+      properties:
+        activities:
+          items:
+            $ref: '#/components/schemas/Activity'
+          type: array
+          title: Activities
+      type: object
+      required:
+        - activities
+      title: ProductDefinition
+    Quantity:
+      properties:
+        value:
+          type: integer
+          title: Value
+        unit:
+          $ref: '#/components/schemas/Unit'
+      type: object
+      required:
+        - value
+        - unit
+      title: Quantity
+    Step:
+      properties:
+        name:
+          type: string
+          title: Name
+        description:
+          type: string
+          title: Description
+        stepInformation:
+          type: string
+          title: Stepinformation
+        stepImage:
+          $ref: '#/components/schemas/StepImage'
+        stepVideo:
+          $ref: '#/components/schemas/StepVideo'
+        stepType:
+          type: string
+          enum:
+            - SETUP
+            - PRODUCTION
+            - TEAR DOWN
+            - REWORK
+            - QUALITY CHECK
+          title: Steptype
+        equipment:
+          items:
+            $ref: '#/components/schemas/Equipment'
+          type: array
+          title: Equipment
+      type: object
+      required:
+        - name
+        - description
+        - stepInformation
+        - stepImage
+        - stepVideo
+        - stepType
+        - equipment
+      title: Step
+    StepImage:
+      properties:
+        imageString:
+          type: string
+          title: Imagestring
+        source:
+          type: string
+          enum:
+            - URL
+          const: URL
+          title: Source
+      type: object
+      required:
+        - imageString
+        - source
+      title: StepImage
+    StepVideo:
+      properties:
+        videoString:
+          type: string
+          title: Videostring
+        source:
+          type: string
+          enum:
+            - URL
+          const: URL
+          title: Source
+        start:
+          type: string
+          title: Start
+        end:
+          type: string
+          title: End
+      type: object
+      required:
+        - videoString
+        - source
+        - start
+        - end
+      title: StepVideo
+    Unit:
+      properties:
+        name:
+          type: string
+          title: Name
+      type: object
+      required:
+        - name
+      title: Unit
+    VideoAnalysisCancelled:
+      properties:
+        videoAnalysisId:
+          type: string
+          title: Videoanalysisid
+        message:
+          type: object
+          title: Message
+          default: {}
+      type: object
+      required:
+        - videoAnalysisId
+      title: VideoAnalysisCancelled
+    VideoAnalysisDeleted:
+      properties:
+        videoAnalysisId:
+          type: string
+          title: Videoanalysisid
+        message:
+          type: object
+          title: Message
+          default: {}
+      type: object
+      required:
+        - videoAnalysisId
+      title: VideoAnalysisDeleted
+    VideoAnalysisInformation:
+      properties:
+        videoAnalysisId:
+          type: string
+          title: Videoanalysisid
+        haleriumPathUrl:
+          type: string
+          title: Haleriumpathurl
+      type: object
+      required:
+        - videoAnalysisId
+        - haleriumPathUrl
+      title: VideoAnalysisInformation
+    VideoAnalysisResult:
+      properties:
+        videoAnalysisId:
+          type: string
+          title: Videoanalysisid
+        status:
+          type: string
+          enum:
+            - RUNNING
+            - COMPLETED
+            - FAILED
+          title: Status
+        message:
+          type: object
+          title: Message
+          default: {}
+        productDefinition:
+          $ref: '#/components/schemas/ProductDefinition'
+          default: {}
+      type: object
+      required:
+        - videoAnalysisId
+        - status
+      title: VideoAnalysisResult
