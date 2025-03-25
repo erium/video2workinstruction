@@ -15,16 +15,16 @@ paths:
         edited.
       operationId: startVideoAnalysis
       requestBody:
+        required: true
         content:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Body_startVideoAnalysis'
-        required: true
       responses:
         '201':
           description: >-
-            ID and Halerium Path URL at which the product definition can be
-            found and edited.
+            Product Definition Name, Run ID, and Halerium Path URL at which the
+            product definition can be found and edited upon pipeline completion.
           content:
             application/json:
               schema:
@@ -43,6 +43,52 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags:
+        - videoAnalysis
+      summary: Get all exisiting Video Analyses or for a specific tag.
+      description: >-
+        Returns a list of all video analyses or for a specific tag. If tag is
+        not set, returns all video analyses.
+      operationId: getVideoAnalyses
+      parameters:
+        - name: tag
+          in: query
+          required: false
+          schema:
+            type: string
+            nullable: true
+          description: The tag to filter video analyses by
+      responses:
+        '200':
+          description: >-
+            Product Definition Name, Run ID, and Halerium Path URL of all active
+            Runs for a specific tag. If tag is not set, returns all active runs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VideoAnalysisInformation'
+                title: Response Getvideoanalyses
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not Found
           content:
             application/json:
               schema:
@@ -92,47 +138,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /v1/video/videoAnalysis/{id}/cancel:
-    post:
-      tags:
-        - videoAnalysis
-      summary: Cancel Video Analysis
-      description: Cancels the video analysis with the given ID.
-      operationId: cancelVideoAnalysis
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            title: Id
-      responses:
-        '200':
-          description: Message indicating the run was cancelled.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VideoAnalysisCancelled'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        default:
-          description: An unexpected error occurred
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /v1/video/videoAnalysis/{id}/delete:
-    post:
+    delete:
       tags:
         - videoAnalysis
       summary: Delete Video Analysis
@@ -172,6 +178,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /v1/video/docx/{id}:
+    get:
+      tags:
+        - videoAnalysis
+      summary: Get the product definition in docx format
+      description: >-
+        Returns the product definition in docx format. DOCX generation first has
+        to be triggered in the user review board!
+      operationId: getDocx
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Id
+      responses:
+        '200':
+          description: The product definition in docx format.
+          content:
+            application/json:
+              schema: {}
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     Activity:
@@ -183,14 +229,7 @@ components:
           type: string
           title: Description
         activityType:
-          type: string
-          enum:
-            - SETUP
-            - PRODUCTION
-            - TEAR DOWN
-            - REWORK
-            - QUALITY CHECK
-          title: Activitytype
+          $ref: '#/components/schemas/StepTypeActivityTypeEnum'
         steps:
           items:
             $ref: '#/components/schemas/Step'
@@ -218,6 +257,9 @@ components:
           type: string
           title: Videopath
           description: Path to the video file on client's system
+        tag:
+          type: string
+          nullable: true
       type: object
       required:
         - video
@@ -290,6 +332,30 @@ components:
         - value
         - unit
       title: Quantity
+    SourceEnum:
+      type: string
+      enum:
+        - URL
+      title: SourceEnum
+    StatusEnum:
+      type: string
+      enum:
+        - started
+        - running
+        - finished
+        - pending
+        - failed
+        - cancelled
+        - success
+      title: StatusEnum
+      x-enum-varnames:
+        - started
+        - running
+        - finished
+        - pending
+        - failed
+        - cancelled
+        - success
     Step:
       properties:
         name:
@@ -306,14 +372,7 @@ components:
         stepVideo:
           $ref: '#/components/schemas/StepVideo'
         stepType:
-          type: string
-          enum:
-            - SETUP
-            - PRODUCTION
-            - TEAR DOWN
-            - REWORK
-            - QUALITY CHECK
-          title: Steptype
+          $ref: '#/components/schemas/StepTypeActivityTypeEnum'
         equipment:
           items:
             $ref: '#/components/schemas/Equipment'
@@ -335,27 +394,28 @@ components:
           type: string
           title: Imagestring
         source:
-          type: string
-          enum:
-            - URL
-          const: URL
-          title: Source
+          $ref: '#/components/schemas/SourceEnum'
       type: object
       required:
         - imageString
         - source
       title: StepImage
+    StepTypeActivityTypeEnum:
+      type: string
+      enum:
+        - SETUP
+        - PRODUCTION
+        - TEAR DOWN
+        - REWORK
+        - QUALITY CHECK
+      title: StepTypeActivityTypeEnum
     StepVideo:
       properties:
         videoString:
           type: string
           title: Videostring
         source:
-          type: string
-          enum:
-            - URL
-          const: URL
-          title: Source
+          $ref: '#/components/schemas/SourceEnum'
         start:
           type: string
           title: Start
@@ -378,66 +438,70 @@ components:
       required:
         - name
       title: Unit
-    VideoAnalysisCancelled:
-      properties:
-        videoAnalysisId:
-          type: string
-          title: Videoanalysisid
-        message:
-          type: object
-          title: Message
-          default: {}
-      type: object
-      required:
-        - videoAnalysisId
-      title: VideoAnalysisCancelled
     VideoAnalysisDeleted:
       properties:
         videoAnalysisId:
           type: string
           title: Videoanalysisid
+        prodDefName:
+          type: string
+          title: Proddefname
         message:
           type: object
-          title: Message
-          default: {}
+          nullable: true
       type: object
       required:
         - videoAnalysisId
+        - prodDefName
       title: VideoAnalysisDeleted
     VideoAnalysisInformation:
       properties:
         videoAnalysisId:
           type: string
           title: Videoanalysisid
+        prodDefName:
+          type: string
+          title: Proddefname
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+          description: ISO8601 compliant datetime string
+        tag:
+          type: string
+          nullable: true
         haleriumPathUrl:
           type: string
           title: Haleriumpathurl
+        status:
+          $ref: '#/components/schemas/StatusEnum'
       type: object
       required:
         - videoAnalysisId
+        - prodDefName
+        - createdAt
         - haleriumPathUrl
+        - status
       title: VideoAnalysisInformation
     VideoAnalysisResult:
       properties:
         videoAnalysisId:
           type: string
           title: Videoanalysisid
-        status:
+        prodDefName:
           type: string
-          enum:
-            - RUNNING
-            - COMPLETED
-            - FAILED
-          title: Status
+          title: Proddefname
+        status:
+          $ref: '#/components/schemas/StatusEnum'
         message:
           type: object
-          title: Message
-          default: {}
+          nullable: true
         productDefinition:
           $ref: '#/components/schemas/ProductDefinition'
-          default: {}
+          nullable: true
       type: object
       required:
         - videoAnalysisId
+        - prodDefName
         - status
       title: VideoAnalysisResult
