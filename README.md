@@ -1,2 +1,2 @@
 # video2workinstruction
-Hosts artifacts of the video2workinstruction API
+Hosts openapi yaml of the video2workinstruction API
