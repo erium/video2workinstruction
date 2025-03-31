@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Video to Workinstructions API
   description: API for converting videos to workinstructions
-  version: 1.0.0-RC1
+  version: 1.0.0-RC2
 paths:
   /v1/video/videoAnalysis:
     post:
@@ -141,7 +141,7 @@ paths:
     delete:
       tags:
         - videoAnalysis
-      summary: Delete Video Analysis
+      summary: Delete the Video Analysis.
       description: >-
         Deletes the video analysis run with the given ID. Also cancels the run
         if it is still running.
@@ -302,13 +302,19 @@ components:
           default: ''
       type: object
       title: ErrorResponse
-      examples:
-        - code: 400
-          detail: An error occurred while processing the request
-          message: Detailed error message about the cause of the error.
-        - code: 404
-          detail: Not Found
-          message: The requested resource was not found.
+    Message:
+      properties:
+        currentStep:
+          type: string
+          nullable: true
+        currentStatus:
+          type: string
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+      type: object
+      title: Message
     ProductDefinition:
       properties:
         activities:
@@ -336,6 +342,7 @@ components:
       type: string
       enum:
         - URL
+        - PATH
       title: SourceEnum
     StatusEnum:
       type: string
@@ -447,7 +454,7 @@ components:
           type: string
           title: Proddefname
         message:
-          type: object
+          $ref: '#/components/schemas/Message'
           nullable: true
       type: object
       required:
@@ -494,7 +501,7 @@ components:
         status:
           $ref: '#/components/schemas/StatusEnum'
         message:
-          type: object
+          $ref: '#/components/schemas/Message'
           nullable: true
         productDefinition:
           $ref: '#/components/schemas/ProductDefinition'
