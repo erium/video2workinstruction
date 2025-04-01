@@ -412,9 +412,9 @@ components:
       enum:
         - SETUP
         - PRODUCTION
-        - TEAR DOWN
+        - TEAR_DOWN
         - REWORK
-        - QUALITY CHECK
+        - QUALITY_CHECK
       title: StepTypeActivityTypeEnum
     StepVideo:
       properties:
